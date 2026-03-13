@@ -4,7 +4,12 @@ dashboard/app.py — Painel Streamlit para visualização de anúncios imobiliá
 Uso:
     streamlit run dashboard/app.py
 """
+import os
+import sys
 import time
+
+# Garantir que o diretório raiz do projeto esteja no path
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 import pandas as pd
 import pydeck as pdk
