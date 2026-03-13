@@ -1,0 +1,31 @@
+sources:
+  zap:
+    name: Zap Imóveis
+    base_url: "https://www.zapimoveis.com.br/venda/imoveis/{city}/"
+    pagination_param: "pagina"
+    rate_limit_seconds: 1.5
+    module: scrapers.zap_scraper
+    function: scrape_zap
+
+  vivareal:
+    name: VivaReal
+    base_url: "https://www.vivareal.com.br/venda/{city}/"
+    pagination_param: "pagina"
+    rate_limit_seconds: 1.5
+    module: scrapers.vivareal_scraper
+    function: scrape_vivareal
+
+  olx:
+    name: OLX
+    base_url: "https://www.olx.com.br/imoveis/venda/estado-sp"
+    pagination_param: "o"
+    rate_limit_seconds: 2.0
+    module: scrapers.olx_scraper
+    function: scrape_olx
+
+city_slugs:
+  "São Paulo": "sp+sao-paulo"
+  "Rio de Janeiro": "rj+rio-de-janeiro"
+  "Belo Horizonte": "mg+belo-horizonte"
+  "Curitiba": "pr+curitiba"
+  "Porto Alegre": "rs+porto-alegre"

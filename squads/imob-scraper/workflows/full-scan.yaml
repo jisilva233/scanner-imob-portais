@@ -1,0 +1,51 @@
+name: full-scan
+description: Coleta anúncios de todos os portais e armazena no PostgreSQL
+version: 1.0.0
+
+trigger:
+  command: "python scan_listings.py --city {city}"
+
+phases:
+  - id: scraping
+    name: Coleta de Dados
+    parallel: true
+    agent: scraper-agent
+    tasks:
+      - scrape-zap.md
+      - scrape-vivareal.md
+      - scrape-olx.md
+    inputs:
+      city: "{{ args.city }}"
+      max_pages: 10
+    outputs:
+      - listings_zap
+      - listings_vivareal
+      - listings_olx
+
+  - id: storage
+    name: Armazenamento
+    depends_on: [scraping]
+    agent: data-agent
+    tasks:
+      - store-listings.md
+    inputs:
+      listings: "{{ merge(phases.scraping.outputs) }}"
+    outputs:
+      - stats
+
+  - id: deduplication
+    name: Deduplicação
+    depends_on: [storage]
+    agent: data-agent
+    tasks:
+      - deduplicate-listings.md
+    outputs:
+      - dedup_stats
+
+completion:
+  message: |
+    ✅ Scan completo!
+    Inseridos: {{ phases.storage.stats.inserted }}
+    Duplicados: {{ phases.storage.stats.duplicates }}
+    Desativados: {{ phases.deduplication.dedup_stats }}
+    Execute: streamlit run dashboard/app.py

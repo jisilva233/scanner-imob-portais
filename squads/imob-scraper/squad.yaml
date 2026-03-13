@@ -1,0 +1,66 @@
+name: imob-scraper
+version: 1.0.0
+description: >-
+  Squad para scraping de anúncios imobiliários do Zap Imóveis, VivaReal e OLX.
+  Coleta título, preço, bairro, metragem, quartos, fotos, link e data.
+  Armazena em PostgreSQL com deduplicação e expõe painel Streamlit.
+author: AIOS Team
+license: MIT
+slashPrefix: imobScraper
+
+aios:
+  minVersion: "2.1.0"
+  type: squad
+
+components:
+  agents:
+    - scraper-agent.md
+    - data-agent.md
+    - dashboard-agent.md
+  tasks:
+    - scrape-zap.md
+    - scrape-vivareal.md
+    - scrape-olx.md
+    - store-listings.md
+    - deduplicate-listings.md
+    - run-dashboard.md
+  workflows:
+    - full-scan.yaml
+  checklists:
+    - scraping-checklist.md
+  templates: []
+  scripts:
+    - scan_listings.py
+    - scrapers/zap_scraper.py
+    - scrapers/vivareal_scraper.py
+    - scrapers/olx_scraper.py
+    - db/models.py
+    - db/migrations.py
+    - dashboard/app.py
+  data:
+    - sources.yaml
+
+config:
+  extends: extend
+  coding-standards: config/coding-standards.md
+  tech-stack: config/tech-stack.md
+  source-tree: config/source-tree.md
+
+dependencies:
+  python:
+    - playwright>=1.40.0
+    - psycopg2-binary>=2.9.0
+    - sqlalchemy>=2.0.0
+    - streamlit>=1.30.0
+    - python-dotenv>=1.0.0
+    - pydantic>=2.0.0
+  squads: []
+
+tags:
+  - scraping
+  - imobiliario
+  - python
+  - playwright
+  - postgresql
+  - streamlit
+  - etl
