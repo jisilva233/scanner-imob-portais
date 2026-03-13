@@ -21,14 +21,14 @@ from sqlalchemy import (
     String,
     create_engine,
 )
-from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import DeclarativeBase, Session
 
 load_dotenv()
 
 DATABASE_URL = os.getenv(
-    "DATABASE_URL", "postgresql://user:password@localhost:5432/imob_scraper"
+    "DATABASE_URL", "sqlite:///imob_scraper.db"
 )
+
 engine = create_engine(DATABASE_URL, pool_pre_ping=True)
 
 
@@ -101,28 +101,41 @@ def make_fingerprint(listing_url: str, price: Optional[float], title: str) -> st
 
 def store_listings(listings: list[PropertyListing]) -> dict:
     """
-    Armazena listings no PostgreSQL com deduplicação via fingerprint.
+    Armazena listings no banco com deduplicação via fingerprint.
 
-    Usa INSERT ... ON CONFLICT (fingerprint) DO NOTHING para evitar duplicatas.
+    Suporta PostgreSQL (ON CONFLICT) e SQLite (check manual).
 
     Returns:
         dict: {inserted: int, duplicates: int, errors: int}
     """
     stats = {"inserted": 0, "duplicates": 0, "errors": 0}
+    is_pg = DATABASE_URL.startswith("postgresql")
 
     with Session(engine) as session:
         for listing in listings:
             try:
-                stmt = (
-                    insert(PropertyListingDB)
-                    .values(**listing.model_dump())
-                    .on_conflict_do_nothing(index_elements=["fingerprint"])
-                )
-                result = session.execute(stmt)
-                if result.rowcount > 0:
-                    stats["inserted"] += 1
+                if is_pg:
+                    from sqlalchemy.dialects.postgresql import insert as pg_insert
+
+                    stmt = (
+                        pg_insert(PropertyListingDB)
+                        .values(**listing.model_dump())
+                        .on_conflict_do_nothing(index_elements=["fingerprint"])
+                    )
+                    result = session.execute(stmt)
+                    if result.rowcount > 0:
+                        stats["inserted"] += 1
+                    else:
+                        stats["duplicates"] += 1
                 else:
-                    stats["duplicates"] += 1
+                    exists = session.query(PropertyListingDB).filter_by(
+                        fingerprint=listing.fingerprint
+                    ).first()
+                    if exists:
+                        stats["duplicates"] += 1
+                    else:
+                        session.add(PropertyListingDB(**listing.model_dump()))
+                        stats["inserted"] += 1
             except Exception as e:
                 print(f"[DB] Erro ao inserir {listing.fingerprint[:8]}...: {e}")
                 stats["errors"] += 1
