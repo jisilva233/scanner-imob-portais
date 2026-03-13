@@ -18,7 +18,10 @@ import streamlit as st
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from db.models import PropertyListingDB, engine
+from db.models import Base, PropertyListingDB, engine
+
+# Criar tabelas automaticamente (necessário no Streamlit Cloud)
+Base.metadata.create_all(engine)
 
 st.set_page_config(
     page_title="Imob Scanner",
